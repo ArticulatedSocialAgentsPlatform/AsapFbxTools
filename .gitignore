@@ -1,0 +1,15 @@
+*.sdf
+*.user
+*.suo
+*.ilk
+*.filters
+*.rc
+*.res
+*.ncb
+*.pdb
+*.manifest
+*.lastbuildstate
+Release
+Debug
+ipch
+bin
