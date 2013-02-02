@@ -37,7 +37,7 @@
 #include <fbxsdk.h>
 #include "../Common/Common.h"
 #include <fbxsdk/fbxsdk_def.h>
-#include "jointrenaming.h"
+#include "../Common/jointrenaming.h"
 #include <vector>
 #include <map>
 #include <math.h>
@@ -148,8 +148,8 @@ const char *isHanim(const char *s)
 			return HANIM_JOINTS[i];
 		}
 	}
-	//return NULL;
-	return s;
+	return NULL;
+	//return s;
 }
 
 const char *isTranslator(const char *s)
@@ -162,8 +162,8 @@ const char *isTranslator(const char *s)
 			return HANIM_TRANSLATORS[i];
 		}
 	}
-	//return NULL;	
-	return s;
+	return NULL;	
+	//return s;
 }
 
 
@@ -278,9 +278,9 @@ const char * isValidTranslation(FbxAnimLayer* pAnimLayer, FbxNode* pNode)
 	KFCurve *lCurveY = lCurrentTakeNode->GetTranslationY();
 	KFCurve *lCurveZ = lCurrentTakeNode->GetTranslationZ();
 	*/	
-	FbxAnimCurve *lCurveX = pNode->LclRotation.GetCurve(pAnimLayer,FBXSDK_CURVENODE_COMPONENT_X);
-	FbxAnimCurve *lCurveY = pNode->LclRotation.GetCurve(pAnimLayer,FBXSDK_CURVENODE_COMPONENT_Y);
-	FbxAnimCurve *lCurveZ = pNode->LclRotation.GetCurve(pAnimLayer,FBXSDK_CURVENODE_COMPONENT_Z);
+	FbxAnimCurve *lCurveX = pNode->LclTranslation.GetCurve(pAnimLayer,FBXSDK_CURVENODE_COMPONENT_X);
+	FbxAnimCurve *lCurveY = pNode->LclTranslation.GetCurve(pAnimLayer,FBXSDK_CURVENODE_COMPONENT_Y);
+	FbxAnimCurve *lCurveZ = pNode->LclTranslation.GetCurve(pAnimLayer,FBXSDK_CURVENODE_COMPONENT_Z);
 	
 	int i;
 	//DefaultJoint j;
@@ -480,8 +480,9 @@ void GetBothKeys(FbxNode* pNode, FbxAnimLayer* pAnimLayer,vector<TranslationRota
 
     //if(lCurrentTakeName /*&& lCurrentTakeName != lDefaultTakeName*/)
     {
+		
+		TranslationRotationTriple r;		
 		const char *name = isValidRotation(pAnimLayer,pNode);
-		TranslationRotationTriple r;
 		/*
 		r.rotX = lCurrentTakeNode->GetEulerRotationX();
 		r.rotY = lCurrentTakeNode->GetEulerRotationY();
@@ -489,37 +490,42 @@ void GetBothKeys(FbxNode* pNode, FbxAnimLayer* pAnimLayer,vector<TranslationRota
 		*/
 
 		
-
-		r.rotX = pNode->LclRotation.GetCurve(pAnimLayer,FBXSDK_CURVENODE_COMPONENT_X);
-		r.rotY = pNode->LclRotation.GetCurve(pAnimLayer,FBXSDK_CURVENODE_COMPONENT_Y);
-		r.rotZ = pNode->LclRotation.GetCurve(pAnimLayer,FBXSDK_CURVENODE_COMPONENT_Z);
+		if(name)
+		{
+			r.rotX = pNode->LclRotation.GetCurve(pAnimLayer,FBXSDK_CURVENODE_COMPONENT_X);
+			r.rotY = pNode->LclRotation.GetCurve(pAnimLayer,FBXSDK_CURVENODE_COMPONENT_Y);
+			r.rotZ = pNode->LclRotation.GetCurve(pAnimLayer,FBXSDK_CURVENODE_COMPONENT_Z);
+		}
+		else
+		{
+			r.rotX = NULL;
+			r.rotY = NULL;
+			r.rotZ = NULL;
+		}
 		/*		
 		r.defaultX = startRotX;
 		r.defaultY = startRotY;
 		r.defaultZ = startRotZ;
 		*/
-		if(name && r.rotX->KeyGetCount()>1)
+		name = isValidTranslation(pAnimLayer,pNode);
+		if(name)
 		{
-			//printf("rot pushback\n");
-			/*
-			r.transX = lCurrentTakeNode->GetTranslationX();
-			r.transY = lCurrentTakeNode->GetTranslationY();
-			r.transZ = lCurrentTakeNode->GetTranslationZ();
-			*/			
-			r.rotX = pNode->LclRotation.GetCurve(pAnimLayer,FBXSDK_CURVENODE_COMPONENT_X);
-			r.rotY = pNode->LclRotation.GetCurve(pAnimLayer,FBXSDK_CURVENODE_COMPONENT_Y);
-			r.rotZ = pNode->LclRotation.GetCurve(pAnimLayer,FBXSDK_CURVENODE_COMPONENT_Z);
+				r.transX = pNode->LclTranslation.GetCurve(pAnimLayer,FBXSDK_CURVENODE_COMPONENT_X);
+				r.transY = pNode->LclTranslation.GetCurve(pAnimLayer,FBXSDK_CURVENODE_COMPONENT_Y);
+				r.transZ = pNode->LclTranslation.GetCurve(pAnimLayer,FBXSDK_CURVENODE_COMPONENT_Z);			
+		}
+		else
+		{	
+			r.transX = NULL;
+			r.transY = NULL;
+			r.transZ = NULL;
+		}
 
-			//if(!isValidTranslation(pAnimLayer,pNode) || r.transX->KeyGetCount()<=1)
-			//2013fix
-			if(!isValidTranslation(pAnimLayer,pNode))
-			{
-				r.transX = NULL;
-				r.transY = NULL;
-				r.transZ = NULL;
-			}
+		if(r.rotX!=NULL || r.transX!=NULL)
+		{
 			transrot.push_back(r);						
 		}
+			
 	}
 
 	for(lModelCount = 0; lModelCount < pNode->GetChildCount(); lModelCount++)
@@ -773,7 +779,17 @@ void GetBothKeys(FbxNode* pNode, FbxAnimLayer* pAnimLayer, int numTrans)
 
 	bool first;
 	vector<TranslationRotationTriple>::iterator r=trans.begin();
-	int keys = (*r).rotX->KeyGetCount();
+
+	int keys;
+	if((*r).rotX)
+	{
+		keys= (*r).rotX->KeyGetCount();
+	}
+	else
+	{
+		keys= (*r).transX->KeyGetCount();
+	}
+
 	float rotX,rotY,rotZ;
 	float x=0,y=0,z=0,w=1;
 	//float startRotX,startRotY,startRotZ;
@@ -798,7 +814,15 @@ void GetBothKeys(FbxNode* pNode, FbxAnimLayer* pAnimLayer, int numTrans)
 		{
 			if(first)
 			{
-				FbxTime   lKeyTime=(*r).rotX->KeyGetTime(i);
+				FbxTime   lKeyTime;
+				if((*r).rotX)
+				{
+					lKeyTime=(*r).rotX->KeyGetTime(i);
+				}
+				else
+				{
+					lKeyTime=(*r).transX->KeyGetTime(i);
+				}
 				//lKeyTime.GetTimeString(lTimeString);
 				//printf("%d",(int)(lKeyTime.GetSecondDouble()*1000.0));
 				printf("%f ",lKeyTime.GetSecondDouble());
@@ -839,12 +863,16 @@ void GetBothKeys(FbxNode* pNode, FbxAnimLayer* pAnimLayer, int numTrans)
 			}
 
 			
-			
-			if( i<(*r).rotX->KeyGetCount()  && i<(*r).rotY->KeyGetCount() && i<(*r).rotZ->KeyGetCount())
+			if((*r).rotX==NULL)
+			{
+				printf(" 1 0 0 0");
+			}
+			else if( i<(*r).rotX->KeyGetCount()  && i<(*r).rotY->KeyGetCount() && i<(*r).rotZ->KeyGetCount())
 			{
 				rotX = (*r).rotX->KeyGetValue(i); //- (*r).defaultX;
 				rotY = (*r).rotY->KeyGetValue(i); //- (*r).defaultY;
 				rotZ = (*r).rotZ->KeyGetValue(i); //- (*r).defaultZ;			
+				
 				/*
 				printf("\n%d Rot x,y,z %f %f %f\n",i,rotX,rotY,rotZ);
 				printf("%d Default x,y,z %f %f %f\n",i,(*r).defaultX,(*r).defaultY,(*r).defaultZ);
@@ -1295,7 +1323,7 @@ int main(int argc, char** argv)
 			printf("\">\n");
 
 			//FIXME: exports both animations currently
-			return 1;
+			//return 1;
 			
 			//GetKeys(lScene->GetRootNode(),skeleton);
 			//GetBothKeys(lScene->GetRootNode(),skeleton, numTranslatedParts);

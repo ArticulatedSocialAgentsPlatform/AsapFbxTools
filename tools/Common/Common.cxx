@@ -25,8 +25,7 @@ void InitializeSdkObjects(FbxManager*& pManager, FbxScene*& pScene)
         FBXSDK_printf("Error: Unable to create FBX Manager!\n");
         exit(1);
     }
-	else FBXSDK_printf("Autodesk FBX SDK version %s\n", pManager->GetVersion());
-
+	
 	//Create an IOSettings object. This object holds all import/export settings.
 	FbxIOSettings* ios = FbxIOSettings::Create(pManager, IOSROOT);
 	pManager->SetIOSettings(ios);
@@ -48,7 +47,7 @@ void DestroySdkObjects(FbxManager* pManager, bool pExitStatus)
 {
     //Delete the FBX Manager. All the objects that have been allocated using the FBX Manager and that haven't been explicitly destroyed are also automatically destroyed.
     if( pManager ) pManager->Destroy();
-	if( pExitStatus ) FBXSDK_printf("Program Success!\n");
+	//if( pExitStatus ) FBXSDK_printf("Program Success!\n");
 }
 
 bool SaveScene(FbxManager* pManager, FbxDocument* pScene, const char* pFilename, int pFileFormat, bool pEmbedMedia)
@@ -102,7 +101,7 @@ bool SaveScene(FbxManager* pManager, FbxDocument* pScene, const char* pFilename,
     }
 
     FbxManager::GetFileFormatVersion(lMajor, lMinor, lRevision);
-    FBXSDK_printf("FBX file format version %d.%d.%d\n\n", lMajor, lMinor, lRevision);
+    //FBXSDK_printf("FBX file format version %d.%d.%d\n\n", lMajor, lMinor, lRevision);
 
     // Export the scene.
     lStatus = lExporter->Export(pScene); 
@@ -117,7 +116,7 @@ bool LoadScene(FbxManager* pManager, FbxDocument* pScene, const char* pFilename)
     int lFileMajor, lFileMinor, lFileRevision;
     int lSDKMajor,  lSDKMinor,  lSDKRevision;
     //int lFileFormat = -1;
-    int i, lAnimStackCount;
+    int lAnimStackCount;
     bool lStatus;
     char lPassword[1024];
 
@@ -146,23 +145,23 @@ bool LoadScene(FbxManager* pManager, FbxDocument* pScene, const char* pFilename)
         return false;
     }
 
-    FBXSDK_printf("FBX file format version for this FBX SDK is %d.%d.%d\n", lSDKMajor, lSDKMinor, lSDKRevision);
+    //FBXSDK_printf("FBX file format version for this FBX SDK is %d.%d.%d\n", lSDKMajor, lSDKMinor, lSDKRevision);
 
     if (lImporter->IsFBX())
     {
-        FBXSDK_printf("FBX file format version for file '%s' is %d.%d.%d\n\n", pFilename, lFileMajor, lFileMinor, lFileRevision);
+        //FBXSDK_printf("FBX file format version for file '%s' is %d.%d.%d\n\n", pFilename, lFileMajor, lFileMinor, lFileRevision);
 
         // From this point, it is possible to access animation stack information without
         // the expense of loading the entire file.
 
-        FBXSDK_printf("Animation Stack Information\n");
+        //FBXSDK_printf("Animation Stack Information\n");
 
         lAnimStackCount = lImporter->GetAnimStackCount();
 
-        FBXSDK_printf("    Number of Animation Stacks: %d\n", lAnimStackCount);
-        FBXSDK_printf("    Current Animation Stack: \"%s\"\n", lImporter->GetActiveAnimStackName().Buffer());
-        FBXSDK_printf("\n");
-
+        //FBXSDK_printf("    Number of Animation Stacks: %d\n", lAnimStackCount);
+        //FBXSDK_printf("    Current Animation Stack: \"%s\"\n", lImporter->GetActiveAnimStackName().Buffer());
+        //FBXSDK_printf("\n");
+		/*
         for(i = 0; i < lAnimStackCount; i++)
         {
             FbxTakeInfo* lTakeInfo = lImporter->GetTakeInfo(i);
@@ -180,7 +179,7 @@ bool LoadScene(FbxManager* pManager, FbxDocument* pScene, const char* pFilename)
             FBXSDK_printf("         Import State: %s\n", lTakeInfo->mSelect ? "true" : "false");
             FBXSDK_printf("\n");
         }
-
+		*/
         // Set the import states. By default, the import states are always set to 
         // true. The code below shows how to change these states.
         IOS_REF.SetBoolProp(IMP_FBX_MATERIAL,        true);
